@@ -14,7 +14,7 @@ pipeline {
     }
 	
 	environment {		
-		GITHUB_URL ='https://github.com/microchip-pic-avr-solutions/avr128da48-using-12-bit-adc.git'
+		GITHUB_URL ='https://github.com/microchip-pic-avr-examples/avr128da48-using-12-bit-adc.git'
 		BITBUCKET_URL = 'https://bitbucket.microchip.com/scm/ebe/avr128da48-using-12-bit-adc.git'
 		DEPLOY_TOOL_URL = 'https://bitbucket.microchip.com/scm/citd/tool-github-deploy.git'
 		DEPLOY_SCRIPT_DIR = 'tool-github-deploy'
