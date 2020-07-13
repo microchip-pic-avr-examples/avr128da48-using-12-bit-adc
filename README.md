@@ -3,7 +3,7 @@
 
 # Using 12-bit ADC for Conversions, Accumulation, and Triggering Events
 
-This repository contains examples of bare metal source code for DAC as described in "Using 12-bit ADC for Conversions, Accumulation, and Triggering Events" document from Microchip.
+This repository contains examples of bare metal source code for ADC as described in "Using 12-bit ADC for Conversions, Accumulation, and Triggering Events" document from Microchip.
 The repository contains an Atmel Studio Solution with multiple projects inside.
 
 Use Cases:
@@ -50,6 +50,7 @@ Two setups will be used for the use cases described in this document:
 | :----------: | :----------------: |
 |PD3 (AIN3)    | Analog Input       |
 |PC6 (LED0)    | Digital Output     |
+|PC0 (TX)      | Digital Output     |
 
 <a name="ConfigB" id="ConfigB"> </a>
   - **The Hardware Configuration B** uses two POT clicks, inserted in mikroBUS slot 1 and slot 2. Slot 1
@@ -62,7 +63,7 @@ connects AN1 to the PD3 (AIN3) and slot 2 connects AN2 to PD4 (AIN4) pin of the 
 | :----------: | :----------------: |
 |PD3 (AIN3)    | Analog Input       |
 |PD4 (AIN4)    | Analog Input       |
-|PC6 (LED0)    | Digital Output     |
+|PC0 (TX)      | Digital Output     |
 
 ## Operation
 
@@ -81,11 +82,24 @@ This example will initialize the ADC, configure two pins for reading the differe
 <br><img src="images/ADC_Diffential_Step5.png" width="500">
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
-6. Select Debug → Start Debugging and Break (Alt+F5)
-<br><img src="images/ADC_Diffential_Step6.png" width="500">
-   - Add a brake point on `adcVal` in the main function
-7. Result: Rotating the Potentiometers on the POT click boards (while pressing F5 key), the adcVal result will vary from a positive to a negative value:
-<br><img src="images/ADC_Diffential_Step7.gif" width="500">
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+7. Result: Rotating the Potentiometers on the POT click boards (after starting the application), the ADC result will be plotted on the graph:
+<br><img src="images/ADC_Diffential_Step7.png" width="600">
 
 
 <a name="EventTriggered" id="EventTriggered"> </a>
@@ -101,8 +115,25 @@ ADC conversion on the RTC overflow; an LED is toggled on after each ADC conversi
 5. Select the AVR128DA48 Curiosity Nano on-board debugger in the *Tool* section of the *AVR-Dx_Bootloader* project settings:
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
-6. Result: The LED0 will toggle with a frequency of `RTC_PERIOD`, that can be modified
-<br><img src="images/ADC_Event_Step6.GIF" width="500">
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+7. Result: The LED0 will toggle with a frequency of `RTC_PERIOD`, that can be modified
+<br><img src="images/ADC_Event_Step7.GIF" width="500">
+<br><img src="images/ADC_Event_Step7.png" width="600">
 
 <a name="FreeRunning" id="FreeRunning"> </a>
 ### ADC Free Running
@@ -116,10 +147,24 @@ This example will Initialize the ADC, enable Free Running mode, start the conver
 5. Select the AVR128DA48 Curiosity Nano on-board debugger in the *Tool* section of the *AVR-Dx_Bootloader* project settings:
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
-6. Select Debug → Start Debugging and Break (Alt+F5)
-   - Add a brake point on `adcVal` in the main function
-7. Result: Rotating the Potentiometer on the POT click board (while pressing F5 key ), the adcVal result will vary:
-<br><img src="images/ADC_FreeRun_Step7.gif" width="500">
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+7. Result: Rotating the Potentiometers on the POT click board (after starting the application), the ADC result will be plotted on the graph:
+<br><img src="images/ADC_Free_Running_Step7.png" width="600">
 
 <a name="SampleAcc" id="SampleAcc"> </a>
 ### ADC Sample Accumulator
@@ -133,10 +178,24 @@ This example will Initialize the ADC, enable accumulation of 64 samples, start t
 5. Select the AVR128DA48 Curiosity Nano on-board debugger in the *Tool* section of the *AVR-Dx_Bootloader* project settings:
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
-6. Select Debug → Start Debugging and Break (Alt+F5)
-   - Add a brake point on `adcVal` in the main function
-7. Result: Rotating the Potentiometer on the POT click board (while pressing F5 key), the adcVal result will vary:
-<br><img src="images/ADC_SampleAcc_Step7.gif" width="500">
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+7. Result: Rotating the Potentiometers on the POT click board (after starting the application), the ADC result will be plotted on the graph:
+<br><img src="images/ADC_SampleAcc_Step7.png" width="600">
 
 <a name="SingleConv" id="SingleConv"> </a>
 ### ADC Single Conversion
@@ -150,10 +209,24 @@ This example will initialize the ADC, start the conversion and wait until it is 
 5. Select the AVR128DA48 Curiosity Nano on-board debugger in the *Tool* section of the *AVR-Dx_Bootloader* project settings:
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
-6. Select Debug → Start Debugging and Break (Alt+F5)
-   - Add a brake point on `adcVal` in the main function
-7. Result: Rotating the Potentiometer on the POT click board (while pressing F5 key), the adcVal result will vary:
-<br><img src="images/ADC_Single_Step7.gif" width="500">
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+7. Result: Rotating the Potentiometers on the POT click board (after starting the application), the ADC result will be plotted on the graph:
+<br><img src="images/ADC_Single_Step7.png" width="600">
 
 <a name="Temperature" id="Temperature"> </a>
 ### ADC Temperature Measurement
@@ -167,10 +240,24 @@ This example will initialize the ADC, select the temperature sensor as input and
 5. Select the AVR128DA48 Curiosity Nano on-board debugger in the *Tool* section of the *AVR-Dx_Bootloader* project settings:
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
-6. Select Debug → Start Debugging and Break (Alt+F5)
-   - Add a brake point on `temp_C` in the main function
-7. Result: Pressing the F5 key, the `temp_C` Value will show the ambient temperature in Celsius (25°C):
-<br><img src="images/ADC_Temp_Step7.png" width="500">
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+7. Result: Rotating the Potentiometers on the POT click board (after starting the application), the ADC result will be plotted on the graph:
+<br><img src="images/ADC_Temp_Step7_dv.png" width="600">
 
 <a name="Window" id="Window"> </a>
 ### ADC Window Comparator
@@ -186,8 +273,27 @@ infinite loop, an LED is toggled on if the ADC result is below the set threshold
 5. Select the AVR128DA48 Curiosity Nano on-board debugger in the *Tool* section of the *AVR-Dx_Bootloader* project settings:
    - Right click on the project and click *Properties*;
    - Click *Tool* tab on the left panel, select the corresponding debugger and save the configuration (Ctrl + S)
+6. Select Tools → Data Visualizer
+<br><img src="images/ADC_Diffential_Step6.png" width="250">
+   - Connect to the Curiosity Nano COM Port
+<br><img src="images/ADC_Diffential_Step6_1.png" width="600">
+   - From Configuration → Protocols, open *Data Streamer* (double click)
+<br><img src="images/ADC_Diffential_Step6_2.png" width="250">
+   - Connect the COM Port source to the Data Stream Control Panel input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_3.png" width="600">
+   - Open the Configuration file and click on Load 
+<br><img src="images/ADC_Diffential_Step6_4.png" width="600">
+<br><img src="images/ADC_Diffential_Step6_5.png" width="500">
+<br><img src="images/ADC_Diffential_Step6_6.png" width="600">
+   - From Configuration → Visualization, open *Graph* (double click)
+<br><img src="images/ADC_Diffential_Step6_7.png" width="250">
+   - Connect the ADCResult source to the Graph: Configuration → Axis 0 → New plot input (drag and drop)
+<br><img src="images/ADC_Diffential_Step6_8.png" width="600">
+   - Add an Horizontal Cursor and configure the value to be 256 - the threshold value
+<br><img src="images/ADC_Window_Step6_9.png" width="600">
 6. Result: Rotating the Potentiometer on the POT click board will modify the adcVal untill LED0 will turn off:
-<br><img src="images/ADC_Window_Step6.GIF" width="500">
+<br><img src="images/ADC_Window_Step7.GIF" width="500">
+<br><img src="images/ADC_Window_Step7.png" width="600">
 
 ## Summary
 The [*TB3245 - Using 12-Bit ADC for Conversions, Accumulation, and Triggering Events](http://www.microchip.com/wwwappnotes/appnotes.aspx?appnote=en1001530) document provides <a href="#UseCases">seven use cases</a> for using the 12-bit ADC of The AVR® DA family of microcontrollers.

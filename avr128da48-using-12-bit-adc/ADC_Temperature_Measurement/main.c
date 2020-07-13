@@ -25,18 +25,40 @@
     SOFTWARE.
 */
 
+#define F_CPU 2000000UL     /* Main clock frequency */ 
+#define START_TOKEN 0x03    /* Start Frame Token */
+#define END_TOKEN 0xFC      /* End Frame Token */
+/* Compute the baud rate */
+#define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
+
 #include <avr/io.h>
 #include <stdbool.h>
+#include <avr/cpufunc.h>
 
 uint32_t temp;
 int16_t temp_C;
 
+void CLKCTRL_init(void);
 void VREF0_init(void);
 void ADC0_init(void);
+void USART1_init(void);
 int16_t ADC0_read(void);
 void ADC0_start(void);
 bool ADC0_conversionDone(void);
+void USART1_Write(const uint8_t data);
 void SYSTEM_init(void);
+
+void CLKCTRL_init(void)
+{
+    /* Enable the prescaler division and set the prescaler 2 */
+    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+}
+
+void PORT_init(void)
+{    
+    /* Configure PC0 as output for USART1 TX */
+    PORTC.DIRSET = PIN0_bm;
+}
 
 void VREF0_init(void)
 {
@@ -52,6 +74,14 @@ void ADC0_init(void)
     ADC0.MUXPOS = ADC_MUXPOS_TEMPSENSE_gc;  /* Select ADC channel, Temp. */
 }
 
+void USART1_init(void)
+{
+    /* Configure the baud rate: 9600 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
+    USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
+}
+
 int16_t ADC0_read(void)
 {
     uint16_t sigrow_offset = SIGROW.TEMPSENSE1;
@@ -62,7 +92,7 @@ int16_t ADC0_read(void)
     temp *= sigrow_slope; /* Result will overflow 16-bit variable */
     temp += 0x0800; /* Add 4096/2 to get correct rounding on division below */
     temp >>= 12; /* Round off to nearest degree in Kelvin, by dividing with 2^12 (4096) */
-    return temp - 273; /* Convert from Kelvin to Celsius (0 Kelvin - 273.15 = -273.1°C) */
+    return (temp - 273); /* Convert from Kelvin to Celsius (0 Kelvin - 273.15 = -273.1°C) */
 }
 
 void ADC0_start(void)
@@ -77,10 +107,21 @@ bool ADC0_conversionDone(void)
     return (ADC0.INTFLAGS & ADC_RESRDY_bm);
 }
 
+void USART1_Write(const uint8_t data)
+{
+    /* Check if USART buffer is ready to transmit data */
+    while (!(USART1.STATUS & USART_DREIF_bm));
+    /* Transmit data using TXDATAL register */
+    USART1.TXDATAL = data;
+}
+
 void SYSTEM_init(void)
 {
+    CLKCTRL_init();
+    PORT_init();
     VREF0_init();
     ADC0_init();
+    USART1_init();
 }
 
 int main(void)
@@ -93,7 +134,12 @@ int main(void)
         if (ADC0_conversionDone())
         {
             temp_C = ADC0_read();
-            /* In Free-Run mode, the next conversion starts automatically */
+            
+            /* Transmit the ADC result to be plotted using Data Visualizer */
+            USART1_Write(START_TOKEN);
+            USART1_Write(temp_C & 0x00FF);
+            USART1_Write(temp_C >> 8);
+            USART1_Write(END_TOKEN);
         }
     }
 }

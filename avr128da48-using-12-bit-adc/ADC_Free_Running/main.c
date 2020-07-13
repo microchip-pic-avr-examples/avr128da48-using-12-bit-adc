@@ -25,25 +25,44 @@
     SOFTWARE.
 */
 
+#define F_CPU 2000000UL     /* Main clock frequency */ 
+#define START_TOKEN 0x03    /* Start Frame Token */
+#define END_TOKEN 0xFC      /* End Frame Token */
+/* Compute the baud rate */
+#define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
+
 #include <avr/io.h>
 #include <stdbool.h>
+#include <avr/cpufunc.h>
 
-uint16_t adcVal;
+volatile uint16_t adcVal;
 
+void CLKCTRL_init(void);
 void PORT_init(void);
 void VREF0_init(void);
 void ADC0_init(void);
+void USART1_init();
 uint16_t ADC0_read(void);
 void ADC0_start(void);
 bool ADC0_conversionDone(void);
+void USART1_Write(const uint8_t data);
 void SYSTEM_init(void);
 
-void PORT_init(void)
+void CLKCTRL_init(void)
 {
+    /* Enable the prescaler division and set the prescaler 2 */
+    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+}
+
+void PORT_init(void)
+{    
+    /* Configure PC0 as output for USART1 TX */
+    PORTC.DIRSET = PIN0_bm;
+    
     /* Disable interrupt and digital input buffer on PD3 */
     PORTD.PIN3CTRL &= ~PORT_ISC_gm;
     PORTD.PIN3CTRL |= PORT_ISC_INPUT_DISABLE_gc;
-    
+
     /* Disable pull-up resistor */
     PORTD.PIN3CTRL &= ~PORT_PULLUPEN_bm;
 }
@@ -62,6 +81,14 @@ void ADC0_init(void)
     ADC0.MUXPOS = ADC_MUXPOS_AIN3_gc;      /* Select ADC channel AIN3 <-> PD3 */
 }
 
+void USART1_init()
+{
+    /* Configure the baud rate: 9600 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
+    USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
+}
+
 uint16_t ADC0_read(void)
 {
     /* Clear the interrupt flag by reading the result */
@@ -76,15 +103,25 @@ void ADC0_start(void)
 
 bool ADC0_conversionDone(void)
 {
-    /* Check if the conversion is done  */
+    /* Check if the conversion is done */
     return (ADC0.INTFLAGS & ADC_RESRDY_bm);
+}
+
+void USART1_Write(const uint8_t data)
+{
+    /* Check if USART buffer is ready to transmit data */
+    while (!(USART1.STATUS & USART_DREIF_bm));
+    /* Transmit data using TXDATAL register */
+    USART1.TXDATAL = data;
 }
 
 void SYSTEM_init(void)
 {
+    CLKCTRL_init();
     PORT_init();
     VREF0_init();
     ADC0_init();
+    USART1_init();
 }
 
 int main(void)
@@ -96,8 +133,14 @@ int main(void)
     {
         if (ADC0_conversionDone())
         {
+            /* Read the ADC result */
             adcVal = ADC0_read();
-            /* In Free-Run mode, the next conversion starts automatically */
+            
+            /* Transmit the ADC result to be plotted using Data Visualizer */
+            USART1_Write(START_TOKEN);
+            USART1_Write(adcVal & 0x00FF);
+            USART1_Write(adcVal >> 8);
+            USART1_Write(END_TOKEN);
         }
     }
 }

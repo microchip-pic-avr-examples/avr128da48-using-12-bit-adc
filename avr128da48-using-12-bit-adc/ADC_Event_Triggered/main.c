@@ -26,24 +26,44 @@
 */
 
 /* RTC Period */
-#define RTC_PERIOD         (511) /* Time in ms */
+#define RTC_PERIOD         (511)    /* Time in ms */
+#define F_CPU 2000000UL             /* Main clock frequency */ 
+#define START_TOKEN 0x03            /* Start Frame Token */
+#define END_TOKEN 0xFC              /* End Frame Token */
+/* Compute the baud rate */
+#define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/cpufunc.h>
+#include <stdbool.h>
 
-uint16_t adcVal;
+volatile uint16_t adcVal;
+volatile bool adcResultReady = 0;
 
+void CLKCTRL_init(void);
 void PORT_init(void);
 void VREF0_init(void);
 void ADC0_init(void);
 void LED0_init(void);
+void USART1_init();
 void LED0_toggle(void);
+void USART1_Write(const uint8_t data);
 void RTC_init(void);
 void EVSYS_init(void);
 void SYSTEM_init(void);
 
+void CLKCTRL_init(void)
+{
+    /* Enable the prescaler division and set the prescaler 2 */
+    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+}
+
 void PORT_init(void)
 {
+    /* Configure PC0 as output for USART1 TX */
+    PORTC.DIRSET = PIN0_bm;
+    
     /* Disable interrupt and digital input buffer on PD3 */
     PORTD.PIN3CTRL &= ~PORT_ISC_gm;
     PORTD.PIN3CTRL |= PORT_ISC_INPUT_DISABLE_gc;
@@ -75,16 +95,33 @@ void LED0_init(void)
     PORTC.DIRSET = PIN6_bm;
 }
 
+void USART1_init()
+{
+    /* Configure the baud rate: 9600 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
+    USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
+}
+
 void LED0_toggle(void)
 {
     PORTC.OUTTGL = PIN6_bm;
+}
+
+void USART1_Write(const uint8_t data)
+{
+    /* Check if USART buffer is ready to transmit data */
+    while (!(USART1.STATUS & USART_DREIF_bm));
+    /* Transmit data using TXDATAL register */
+    USART1.TXDATAL = data;
 }
 
 ISR(ADC0_RESRDY_vect)
 {
     /* Clear the interrupt flag by reading the result */
     adcVal = ADC0.RES;
-    LED0_toggle();
+	/* Update the flag */
+	adcResultReady = 1;
 }
 
 void RTC_init(void)
@@ -112,10 +149,12 @@ void EVSYS_init(void)
 
 void SYSTEM_init(void)
 {
+    CLKCTRL_init();
     PORT_init();
     VREF0_init();
     ADC0_init();
     LED0_init();
+    USART1_init();
     RTC_init();
     EVSYS_init();
 }
@@ -129,6 +168,18 @@ int main(void)
     
     while (1) 
     {
-        ; /* Run in a loop */
+        if (adcResultReady == 1)
+		{
+			/* Update the flag value */
+			adcResultReady = 0;
+			/* Toggle the LED */
+			LED0_toggle();
+			/* Transmit the ADC result to be plotted using Data Visualizer */
+			USART1_Write(START_TOKEN);
+			USART1_Write(adcVal & 0x00FF);
+			USART1_Write(adcVal >> 8);
+			USART1_Write(END_TOKEN);
+		}
+
     }
 }
