@@ -26,10 +26,10 @@
 */
 
 /* RTC Period */
-#define RTC_PERIOD         (511)    /* Time in ms */
-#define F_CPU 2000000UL             /* Main clock frequency */ 
-#define START_TOKEN 0x03            /* Start Frame Token */
-#define END_TOKEN 0xFC              /* End Frame Token */
+#define RTC_PERIOD      (511)       /* RTC period */
+#define F_CPU           4000000UL   /* Main clock frequency */ 
+#define START_TOKEN     0x03        /* Start Frame Token */
+#define END_TOKEN       0xFC        /* End Frame Token */
 /* Compute the baud rate */
 #define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
@@ -51,14 +51,15 @@ void LED0_toggle(void);
 void USART1_Write(const uint8_t data);
 void RTC_init(void);
 void EVSYS_init(void);
-void SYSTEM_init(void);
 
+/* This function initializes the CLKCTRL module */
 void CLKCTRL_init(void)
 {
-    /* Enable the prescaler division and set the prescaler 2 */
-    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+    /* FREQSEL 4M */
+    ccp_write_io((void*)&(CLKCTRL.OSCHFCTRLA), (CLKCTRL.OSCHFCTRLA | CLKCTRL_FREQSEL_4M_gc));
 }
 
+/* This function initializes the PORT module */
 void PORT_init(void)
 {
     /* Configure PC0 as output for USART1 TX */
@@ -72,11 +73,13 @@ void PORT_init(void)
     PORTD.PIN3CTRL &= ~PORT_PULLUPEN_bm;
 }
 
+/* This function initializes the VREF module */
 void VREF0_init(void)
 {
     VREF.ADC0REF = VREF_REFSEL_2V048_gc;  /* Internal 2.048V reference */
 }
 
+/* This function initializes the ADC module */
 void ADC0_init(void)
 {
     ADC0.CTRLC = ADC_PRESC_DIV4_gc;        /* CLK_PER divided by 4 */
@@ -87,27 +90,31 @@ void ADC0_init(void)
     ADC0.EVCTRL |= ADC_STARTEI_bm;         /* Enable event triggered conversion */
 }
 
+/* This function initializes the LED pin */
 void LED0_init(void)
 {
-    /* Make High (OFF) */
-    PORTC.OUTSET = PIN6_bm;
-    /* Make output */
+    /* Configure the pin as output */
     PORTC.DIRSET = PIN6_bm;
+    /* Configure the output high (LED == OFF) */
+    PORTC.OUTSET = PIN6_bm;
 }
 
+/* This function initializes the USART module */
 void USART1_init()
 {
-    /* Configure the baud rate: 9600 */
-    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    /* Configure the baud rate: 115200 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(115200);
     USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
     USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
 }
 
+/* This function toggles the LED pin */
 void LED0_toggle(void)
 {
     PORTC.OUTTGL = PIN6_bm;
 }
 
+/* This function transmits one byte through USART */
 void USART1_Write(const uint8_t data)
 {
     /* Check if USART buffer is ready to transmit data */
@@ -124,6 +131,7 @@ ISR(ADC0_RESRDY_vect)
 	adcResultReady = 1;
 }
 
+/* This function initializes the RTC module  */
 void RTC_init(void)
 {
     /* Initialize RTC: */
@@ -139,6 +147,7 @@ void RTC_init(void)
     RTC.CLKSEL = RTC_CLKSEL_OSC32K_gc;  /* 32.768kHz Internal Crystal (OSC32K) */
 }
 
+/* This function initializes the EVSYS module  */
 void EVSYS_init(void)
 {
     /* Real Time Counter overflow */
@@ -147,8 +156,11 @@ void EVSYS_init(void)
     EVSYS.USERADC0START = EVSYS_USER_CHANNEL0_gc;
 }
 
-void SYSTEM_init(void)
+int main(void)
 {
+    uint16_t result;
+    
+    /* Initialize all peripherals */
     CLKCTRL_init();
     PORT_init();
     VREF0_init();
@@ -157,11 +169,6 @@ void SYSTEM_init(void)
     USART1_init();
     RTC_init();
     EVSYS_init();
-}
-
-int main(void)
-{
-    SYSTEM_init();
     
     /* Enable Global Interrupts */
     sei();
@@ -170,14 +177,20 @@ int main(void)
     {
         if (adcResultReady == 1)
 		{
+            /* Store the result to avoid altering adcVal because of the interrupt. This operation must be atomic */
+            cli();
+            result = adcVal;
+            sei();
+            
 			/* Update the flag value */
 			adcResultReady = 0;
 			/* Toggle the LED */
 			LED0_toggle();
+            
 			/* Transmit the ADC result to be plotted using Data Visualizer */
 			USART1_Write(START_TOKEN);
-			USART1_Write(adcVal & 0x00FF);
-			USART1_Write(adcVal >> 8);
+			USART1_Write(result & 0x00FF);
+			USART1_Write(result >> 8);
 			USART1_Write(END_TOKEN);
 		}
 

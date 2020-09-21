@@ -25,9 +25,9 @@
     SOFTWARE.
 */
 
-#define F_CPU 2000000UL     /* Main clock frequency */ 
-#define START_TOKEN 0x03    /* Start Frame Token */
-#define END_TOKEN 0xFC      /* End Frame Token */
+#define F_CPU           4000000UL   /* Main clock frequency */ 
+#define START_TOKEN     0x03        /* Start Frame Token */
+#define END_TOKEN       0xFC        /* End Frame Token */
 /* Compute the baud rate */
 #define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
@@ -35,7 +35,7 @@
 #include <stdbool.h>
 #include <avr/cpufunc.h>
 
-volatile int16_t adcVal;
+int16_t adcVal;
 
 void CLKCTRL_init(void);
 void PORT_init(void);
@@ -50,8 +50,8 @@ void SYSTEM_init(void);
 
 void CLKCTRL_init(void)
 {
-    /* Enable the prescaler division and set the prescaler 2 */
-    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+    /* FREQSEL 4M */
+    ccp_write_io((void*)&(CLKCTRL.OSCHFCTRLA), (CLKCTRL.OSCHFCTRLA | CLKCTRL_FREQSEL_4M_gc));
 }
 
 void PORT_init(void)
@@ -89,8 +89,8 @@ void ADC0_init(void)
 
 void USART1_init(void)
 {
-    /* Configure the baud rate: 9600 */
-    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    /* Configure the baud rate: 115200 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(115200);
     USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
     USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
 }

@@ -25,9 +25,9 @@
     SOFTWARE.
 */
 
-#define F_CPU 2000000UL     /* Main clock frequency */ 
-#define START_TOKEN 0x03    /* Start Frame Token */
-#define END_TOKEN 0xFC      /* End Frame Token */
+#define F_CPU           4000000UL   /* Main clock frequency */ 
+#define START_TOKEN     0x03        /* Start Frame Token */
+#define END_TOKEN       0xFC        /* End Frame Token */
 /* Compute the baud rate */
 #define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
@@ -35,25 +35,23 @@
 #include <stdbool.h>
 #include <avr/cpufunc.h>
 
-volatile uint16_t adcVal;
-
 void CLKCTRL_init(void);
 void PORT_init(void);
 void VREF0_init(void);
 void ADC0_init(void);
-void USART1_init();
+void USART1_init(void);
 uint16_t ADC0_read(void);
 void ADC0_start(void);
-bool ADC0_conversionDone(void);
 void USART1_Write(const uint8_t data);
-void SYSTEM_init(void);
 
+/* This function initializes the CLKCTRL module */
 void CLKCTRL_init(void)
 {
-    /* Enable the prescaler division and set the prescaler 2 */
-    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+    /* FREQSEL 4M */
+    ccp_write_io((void*)&(CLKCTRL.OSCHFCTRLA), (CLKCTRL.OSCHFCTRLA | CLKCTRL_FREQSEL_4M_gc));
 }
 
+/* This function initializes the PORT module */
 void PORT_init(void)
 {    
     /* Configure PC0 as output for USART1 TX */
@@ -67,11 +65,13 @@ void PORT_init(void)
     PORTD.PIN3CTRL &= ~PORT_PULLUPEN_bm;
 }
 
+/* This function initializes the VREF module */
 void VREF0_init(void)
 {
     VREF.ADC0REF = VREF_REFSEL_2V048_gc;  /* Internal 2.048V reference */
 }
 
+/* This function initializes the ADC module */
 void ADC0_init(void)
 {
     ADC0.CTRLC = ADC_PRESC_DIV4_gc;        /* CLK_PER divided by 4 */
@@ -81,32 +81,32 @@ void ADC0_init(void)
     ADC0.MUXPOS = ADC_MUXPOS_AIN3_gc;      /* Select ADC channel AIN3 <-> PD3 */
 }
 
-void USART1_init()
+/* This function initializes the USART module */
+void USART1_init(void)
 {
-    /* Configure the baud rate: 9600 */
-    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    /* Configure the baud rate: 115200 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(115200);
     USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
     USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
 }
 
+/* This function returns the ADC conversion result */
 uint16_t ADC0_read(void)
 {
+    /* Wait for ADC result to be ready */
+    while (!(ADC0.INTFLAGS & ADC_RESRDY_bm));
     /* Clear the interrupt flag by reading the result */
     return ADC0.RES;
 }
 
+/* This function starts the ADC conversions*/
 void ADC0_start(void)
 {
     /* Start ADC conversion */
     ADC0.COMMAND = ADC_STCONV_bm;
 }
 
-bool ADC0_conversionDone(void)
-{
-    /* Check if the conversion is done */
-    return (ADC0.INTFLAGS & ADC_RESRDY_bm);
-}
-
+/* This function transmits one byte through USART */
 void USART1_Write(const uint8_t data)
 {
     /* Check if USART buffer is ready to transmit data */
@@ -115,32 +115,29 @@ void USART1_Write(const uint8_t data)
     USART1.TXDATAL = data;
 }
 
-void SYSTEM_init(void)
+int main(void)
 {
+    uint16_t adcVal;
+    
+    /* Initialize all peripherals */
     CLKCTRL_init();
     PORT_init();
     VREF0_init();
     ADC0_init();
     USART1_init();
-}
-
-int main(void)
-{
-    SYSTEM_init();
+    
+    /* Start the ADC conversions */
     ADC0_start();
     
     while (1)
     {
-        if (ADC0_conversionDone())
-        {
-            /* Read the ADC result */
-            adcVal = ADC0_read();
-            
-            /* Transmit the ADC result to be plotted using Data Visualizer */
-            USART1_Write(START_TOKEN);
-            USART1_Write(adcVal & 0x00FF);
-            USART1_Write(adcVal >> 8);
-            USART1_Write(END_TOKEN);
-        }
+        /* Read the ADC result */
+        adcVal = ADC0_read();
+        
+        /* Transmit the ADC result to be plotted using Data Visualizer */
+        USART1_Write(START_TOKEN);
+        USART1_Write(adcVal & 0x00FF);
+        USART1_Write(adcVal >> 8);
+        USART1_Write(END_TOKEN);
     }
 }

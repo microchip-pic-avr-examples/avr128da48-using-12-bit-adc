@@ -25,18 +25,15 @@
     SOFTWARE.
 */
 
-#define WINDOW_CMP_LOW_TH_EXAMPLE    (0x100)
-#define F_CPU 2000000UL     /* Main clock frequency */ 
-#define START_TOKEN 0x03    /* Start Frame Token */
-#define END_TOKEN 0xFC      /* End Frame Token */
+#define WINDOW_CMP_LOW_TH_EXAMPLE       (0x100)
+#define F_CPU                           4000000UL   /* Main clock frequency */ 
+#define START_TOKEN                     0x03        /* Start Frame Token */
+#define END_TOKEN                       0xFC        /* End Frame Token */
 /* Compute the baud rate */
 #define USART1_BAUD_RATE(BAUD_RATE) (((float)F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
 #include <avr/io.h>
-#include <stdbool.h>
 #include <avr/cpufunc.h>
-
-volatile uint16_t adcVal;
 
 void CLKCTRL_init(void);
 void PORT_init(void);
@@ -44,21 +41,22 @@ void VREF0_init(void);
 void ADC0_init(void);
 void USART1_init(void);
 uint16_t ADC0_read(void);
+uint8_t ADC0_resultReady(void);
 void ADC0_start(void);
-bool ADC0_resultBelowTreshold(void);
-void ADC0_clearWindowCmpIntFlag(void);
+uint8_t ADC0_resultBelowTreshold(void);
 void USART1_Write(const uint8_t data);
 void LED0_init(void);
 void LED0_on(void);
 void LED0_off(void);
-void SYSTEM_init(void);
 
+/* This function initializes the CLKCTRL module */
 void CLKCTRL_init(void)
 {
-    /* Enable the prescaler division and set the prescaler 2 */
-    ccp_write_io((void*)&(CLKCTRL.MCLKCTRLB),0x01);
+    /* FREQSEL 4M */
+    ccp_write_io((void*)&(CLKCTRL.OSCHFCTRLA), (CLKCTRL.OSCHFCTRLA | CLKCTRL_FREQSEL_4M_gc));
 }
 
+/* This function initializes the PORT module */
 void PORT_init(void)
 {
     /* Configure PC0 as output for USART1 TX */
@@ -72,11 +70,13 @@ void PORT_init(void)
     PORTD.PIN3CTRL &= ~PORT_PULLUPEN_bm;
 }
 
+/* This function initializes the VREF module */
 void VREF0_init(void)
 {
     VREF.ADC0REF = VREF_REFSEL_2V048_gc;    /* Internal 2.048V reference */
 }
 
+/* This function initializes the ADC module */
 void ADC0_init(void)
 {
     ADC0.CTRLC = ADC_PRESC_DIV4_gc;         /* CLK_PER divided by 4 */    
@@ -88,37 +88,40 @@ void ADC0_init(void)
     ADC0.CTRLE = ADC_WINCM_BELOW_gc;        /* Set conversion window mode */
 }
 
+/* This function initializes the USART module */
 void USART1_init(void)
 {
-    /* Configure the baud rate: 9600 */
-    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
+    /* Configure the baud rate: 115200 */
+    USART1.BAUD = (uint16_t)USART1_BAUD_RATE(115200);
     USART1.CTRLB = USART_TXEN_bm;           /* Enable TX */
     USART1.CTRLC = USART_CHSIZE_8BIT_gc;    /* Configure character size: 8 bit */
 }
 
+/* This function returns the ADC conversion result */
 uint16_t ADC0_read(void)
 {
     /* Clear the interrupt flag by reading the result */
     return ADC0.RES;
 }
 
+uint8_t ADC0_resultReady(void)
+{
+    return (ADC0.INTFLAGS & ADC_RESRDY_bm);
+}
+
+/* This function starts the ADC conversions*/
 void ADC0_start(void)
 {
     /* Start conversion */
     ADC0.COMMAND = ADC_STCONV_bm;
 }
 
-bool ADC0_resultBelowTreshold(void)
+uint8_t ADC0_resultBelowTreshold(void)
 {
     return (ADC0.INTFLAGS & ADC_WCMP_bm);
 }
 
-void ADC0_clearWindowCmpIntFlag(void)
-{
-    /* Clear the interrupt flag by writing 1: */
-    ADC0.INTFLAGS = ADC_WCMP_bm;
-}
-
+/* This function transmits one byte through USART */
 void USART1_Write(const uint8_t data)
 {
     /* Check if USART buffer is ready to transmit data */
@@ -127,52 +130,55 @@ void USART1_Write(const uint8_t data)
     USART1.TXDATAL = data;
 }
 
+/* This function initializes the LED pin */
 void LED0_init(void)
 {
-    /* Make High (OFF) */
-    PORTC.OUTSET = PIN6_bm;
-    /* Make output */
+    /* Configure the pin as output */
     PORTC.DIRSET = PIN6_bm;
+    /* Configure the output high (LED == OFF) */
+    PORTC.OUTSET = PIN6_bm;
 }
 
 void LED0_on(void)
 {
-    /* Make Low (ON) */
-    PORTC.OUTTGL = PIN6_bm;
+    /* Configure the output low (LED == ON) */
+    PORTC.OUTCLR = PIN6_bm;
 }
 
 void LED0_off(void)
 {
-    /* Make High (OFF) */
+    /* Configure the output high (LED == OFF) */
     PORTC.OUTSET = PIN6_bm;
 }
 
-void SYSTEM_init(void)
+int main(void)
 {
+    uint16_t adcVal;
+    
+    /* Initialize all peripherals */
     CLKCTRL_init();
     PORT_init();
     VREF0_init();
     ADC0_init();
     USART1_init();
     LED0_init();
-}
-
-int main(void)
-{
-    SYSTEM_init();
+    
+    /* Start the ADC conversion */
     ADC0_start();
         
     while (1)
     {
+        while (!ADC0_resultReady());
+        
         if (ADC0_resultBelowTreshold())
         {
             LED0_on();
-            ADC0_clearWindowCmpIntFlag();
         }
         else
         {
             LED0_off();
         }
+        
         adcVal = ADC0_read();
         
         /* Transmit the ADC result to be plotted using Data Visualizer */
