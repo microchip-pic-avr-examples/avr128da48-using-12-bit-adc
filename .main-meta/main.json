@@ -3,27 +3,27 @@
     "category": "com.microchip.ide.project",
     "content": {
         "metaDataVersion": "1.1.0",
-        "name": "com.microchip.mcu8.studio.project.",
-        "version": " ",
-        "displayName": "  ",
-        "projectName": "",
-        "shortDescription": "",
+        "name": "com.microchip.mcu8.studio.project.avr128da48-using-12-bit-adc",
+        "version": "1.0.3",
+        "displayName": "ADC Conversions, Accumulation, and Triggering Events Examples",
+        "projectName": "avr128da48-using-12-bit-adc",
+        "shortDescription": "This Atmel Studio solution provides seven ADC application examples: Single Conversion, Free Running, Differential Conversion, Event Triggered Conversion, Window Comparator, Accumulator, Temperature Measurement. The ADC results are transmitted and plotted on a graph using the Data Visualizer tool.",
         "ide": {
-            "name": "",
-            "semverRange": ""
+            "name": "Studio",
+            "semverRange": "7.0.2"
         },
         "compiler": [
 			{
-				"name": "",
-				"semverRange": ""
+				"name": "AVR/GNU",
+				"semverRange": "5.4.0"
 			}
 		],
         "dfp": {
-            "name": "",
-            "semverRange": ""
+            "name": "AVR-Dx_DFP",
+            "semverRange": "1.0.27"
         },
         "configurator": {
-            "name": "",
+            "name": "N/A",
             "semverRange": ""
         },
         "device": {
@@ -32,7 +32,7 @@
             "content": {
                 "metaDataVersion": "1.0.0",
                 "category": "com.microchip.device",
-                "name": "",
+                "name": "AVR128DA48",
                 "versionRange": "*"
             }
         },
@@ -40,18 +40,16 @@
         "subcategories": [
             "",
             [
-               "Peripherals", ""
-            ],
-            [
-               "Peripherals", ""
-            ]            			
+               "Peripherals", "ADC"
+            ]  			
         ],
         "peripherals": [
-            "",""
+            "ADC"
         ],
         "keywords": [
-            "",
-            ""			
+            "Interrupt",
+            "Temperature",
+            "C programming"
         ],
 		"additionalData": {
 			"longDescription": {
