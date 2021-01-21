@@ -4,7 +4,7 @@
     "content": {
         "metaDataVersion": "1.1.0",
         "name": "com.microchip.mcu8.studio.project.avr128da48-using-12-bit-adc",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "displayName": "ADC Conversions, Accumulation, and Triggering Events Examples",
         "projectName": "avr128da48-using-12-bit-adc",
         "shortDescription": "This Atmel Studio solution provides seven ADC application examples: Single Conversion, Free Running, Differential Conversion, Event Triggered Conversion, Window Comparator, Accumulator, Temperature Measurement. The ADC results are transmitted and plotted on a graph using the Data Visualizer tool.",
@@ -14,7 +14,7 @@
         },
         "compiler": [
 			{
-				"name": "AVR/GNU",
+				"name": "AVR GCC",
 				"semverRange": "5.4.0"
 			}
 		],
@@ -36,11 +36,11 @@
                 "versionRange": "*"
             }
         },
-        "author": "",
+        "author": "Microchip",
         "subcategories": [
-            "",
             [
-               "Peripherals", "ADC"
+               "Peripherals",
+			   "ADC"
             ]  			
         ],
         "peripherals": [
