@@ -9,7 +9,7 @@
         "projectName": "avr128da48-using-12-bit-adc",
         "shortDescription": "This Atmel Studio solution provides seven ADC application examples: Single Conversion, Free Running, Differential Conversion, Event Triggered Conversion, Window Comparator, Accumulator, Temperature Measurement. The ADC results are transmitted and plotted on a graph using the Data Visualizer tool.",
         "ide": {
-            "name": "Studio",
+            "name": "STUDIO",
             "semverRange": "7.0.2"
         },
         "compiler": [
